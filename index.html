@@ -426,7 +426,20 @@
       margin-bottom: 1.25rem;
     }
 
-    .service-icon i { color: white !important; stroke: white !important; width: 28px; height: 28px; }
+    .service-icon svg {
+      width: 28px !important;
+      height: 28px !important;
+      stroke: white !important;
+      color: white !important;
+    }
+    .service-icon svg path,
+    .service-icon svg line,
+    .service-icon svg circle,
+    .service-icon svg polyline,
+    .service-icon svg polygon,
+    .service-icon svg rect {
+      stroke: white !important;
+    }
 
     .service-card h3 {
       font-size: 1.125rem;
