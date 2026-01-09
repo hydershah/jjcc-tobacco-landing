@@ -72,6 +72,11 @@
 
     .logo-text {
       font-size: 1.25rem;
+      display: none;
+    }
+
+    @media (min-width: 480px) {
+      .logo-text { display: block; }
     }
 
     .logo-text strong { color: #111827; }
@@ -115,14 +120,22 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.875rem;
       font-weight: 600;
       border-radius: 6px;
       text-decoration: none;
       transition: all 0.2s;
       border: none;
       cursor: pointer;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 640px) {
+      .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+      }
     }
 
     .btn-primary {
@@ -136,11 +149,22 @@
     }
 
     .btn-lg {
-      padding: 1rem 2rem;
-      font-size: 1.125rem;
+      padding: 0.875rem 1.5rem;
+      font-size: 1rem;
     }
 
-    .btn i { width: 20px; height: 20px; }
+    @media (min-width: 640px) {
+      .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+      }
+    }
+
+    .btn svg { width: 18px; height: 18px; }
+
+    @media (min-width: 640px) {
+      .btn svg { width: 20px; height: 20px; }
+    }
 
     /* Hero */
     .hero {
@@ -391,15 +415,21 @@
 
     .services-grid {
       display: grid;
-      gap: 1.5rem;
+      gap: 1rem;
     }
 
-    @media (min-width: 768px) {
-      .services-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (min-width: 480px) {
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+      }
     }
 
     @media (min-width: 1024px) {
-      .services-grid { grid-template-columns: repeat(3, 1fr); }
+      .services-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
     }
 
     .service-card {
@@ -472,11 +502,15 @@
     /* Process */
     .process-grid {
       display: grid;
-      gap: 1.5rem;
+      gap: 2rem;
+      grid-template-columns: repeat(2, 1fr);
     }
 
     @media (min-width: 768px) {
-      .process-grid { grid-template-columns: repeat(4, 1fr); }
+      .process-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+      }
     }
 
     .process-step {
@@ -602,11 +636,21 @@
 
     .testimonials-grid {
       display: grid;
-      gap: 2rem;
+      gap: 1.5rem;
     }
 
-    @media (min-width: 768px) {
-      .testimonials-grid { grid-template-columns: repeat(3, 1fr); }
+    @media (min-width: 640px) {
+      .testimonials-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .testimonials-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+      }
     }
 
     .testimonial-card {
