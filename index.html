@@ -1445,16 +1445,196 @@
       });
     });
 
-    // Form submission
-    document.getElementById('contactForm').addEventListener('submit', function(e) {
+    // ============================================================================
+    // MEGA LEAD FORM CONFIGURATION
+    // ============================================================================
+    const MEGA_CONFIG = {
+      CUSTOMER_ID: '0dee26d9-ea40-43fe-a34c-15614df8c224',
+      SITE_ID: 'sk_mkbjw43v_qeewfv37cl',
+      ENDPOINT: 'https://analytics.gomega.ai/submission/submit'
+    };
+
+    const STORAGE_KEYS = {
+      VISITOR_ID: '_mega_vid',
+      SESSION_ID: '_mega_sid',
+      ATTRIBUTION: '_mega_attr'
+    };
+
+    // ============================================================================
+    // UTILITY FUNCTIONS
+    // ============================================================================
+    function generateId(prefix) {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return prefix + '_' + crypto.randomUUID();
+      }
+      return prefix + '_' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        var v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function getCookie(name) {
+      var value = '; ' + document.cookie;
+      var parts = value.split('; ' + name + '=');
+      if (parts.length === 2) {
+        return parts.pop().split(';').shift() || null;
+      }
+      return null;
+    }
+
+    function getVisitorId() {
+      var visitorId = localStorage.getItem(STORAGE_KEYS.VISITOR_ID);
+      if (!visitorId) {
+        visitorId = generateId('vis');
+        localStorage.setItem(STORAGE_KEYS.VISITOR_ID, visitorId);
+      }
+      return visitorId;
+    }
+
+    function getSessionId() {
+      var sessionId = sessionStorage.getItem(STORAGE_KEYS.SESSION_ID);
+      if (!sessionId) {
+        sessionId = generateId('sess');
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+      }
+      return sessionId;
+    }
+
+    // ============================================================================
+    // ATTRIBUTION CAPTURE
+    // ============================================================================
+    function captureAttribution() {
+      var url = new URL(window.location.href);
+      var params = url.searchParams;
+
+      var attribution = {
+        utm_source: params.get('utm_source'),
+        utm_medium: params.get('utm_medium'),
+        utm_campaign: params.get('utm_campaign'),
+        utm_term: params.get('utm_term'),
+        utm_content: params.get('utm_content'),
+        gclid: params.get('gclid'),
+        gbraid: params.get('gbraid'),
+        wbraid: params.get('wbraid'),
+        fbclid: params.get('fbclid'),
+        fbp: getCookie('_fbp'),
+        fbc: getCookie('_fbc')
+      };
+
+      // Generate fbc from fbclid if cookie doesn't exist
+      if (attribution.fbclid && !attribution.fbc) {
+        attribution.fbc = 'fb.1.' + Date.now() + '.' + attribution.fbclid;
+      }
+
+      return attribution;
+    }
+
+    function initAttribution() {
+      var trackingParams = ['utm_source', 'gclid', 'fbclid', 'gbraid', 'wbraid'];
+      var url = new URL(window.location.href);
+      var hasTrackingParams = trackingParams.some(function(param) {
+        return url.searchParams.has(param);
+      });
+
+      if (hasTrackingParams) {
+        var attribution = captureAttribution();
+        localStorage.setItem(STORAGE_KEYS.ATTRIBUTION, JSON.stringify(attribution));
+        return attribution;
+      }
+
+      var stored = localStorage.getItem(STORAGE_KEYS.ATTRIBUTION);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.warn('Failed to parse stored attribution');
+        }
+      }
+
+      var attribution = captureAttribution();
+      localStorage.setItem(STORAGE_KEYS.ATTRIBUTION, JSON.stringify(attribution));
+      return attribution;
+    }
+
+    // Initialize attribution on page load
+    initAttribution();
+
+    // ============================================================================
+    // FORM SUBMISSION
+    // ============================================================================
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      // Hide form, show success
-      this.style.display = 'none';
-      document.getElementById('formSuccess').classList.add('show');
+      var form = this;
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var originalBtnText = submitBtn.innerHTML;
 
-      // Re-init icons for success message
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Sending...<i data-lucide="loader-2" class="animate-spin"></i>';
       lucide.createIcons();
+
+      // Gather form data
+      var formData = {
+        name: form.querySelector('[name="name"]').value,
+        email: form.querySelector('[name="email"]').value,
+        phone: form.querySelector('[name="phone"]').value,
+        message: form.querySelector('[name="message"]').value
+      };
+
+      // Get attribution
+      var attribution = initAttribution();
+
+      // Build payload
+      var payload = {
+        customer_id: MEGA_CONFIG.CUSTOMER_ID,
+        site_id: MEGA_CONFIG.SITE_ID,
+        form_data: formData,
+        url: window.location.href,
+        referrer_url: document.referrer || null,
+        session_id: getSessionId(),
+        visitor_id: getVisitorId(),
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_term: attribution.utm_term,
+        utm_content: attribution.utm_content,
+        gclid: attribution.gclid,
+        gbraid: attribution.gbraid,
+        wbraid: attribution.wbraid,
+        fbclid: attribution.fbclid,
+        fbp: attribution.fbp,
+        fbc: attribution.fbc
+      };
+
+      try {
+        var response = await fetch(MEGA_CONFIG.ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('HTTP error! status: ' + response.status);
+        }
+
+        var result = await response.json();
+        console.log('Lead submitted successfully:', result);
+
+        // Hide form, show success
+        form.style.display = 'none';
+        document.getElementById('formSuccess').classList.add('show');
+        lucide.createIcons();
+
+      } catch (error) {
+        console.error('Submission failed:', error);
+
+        // Still show success to user (lead will be captured by GTM as backup)
+        form.style.display = 'none';
+        document.getElementById('formSuccess').classList.add('show');
+        lucide.createIcons();
+      }
     });
   </script>
 </body>
